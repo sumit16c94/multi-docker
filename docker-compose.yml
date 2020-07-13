@@ -1,0 +1,60 @@
+# The [docker-compose up --build] command should be used if at all you make any changes to this file.
+#If you have dbs : eg postgres and make code changes you need to do a docker-compose down and then again docker-compose up or else db will have the previous values if you do a ctrl-c
+# when you do [docker ps -all] you will see one single container as a whole , in order to see all the services eg: postgres,node,redis do a [docker ps] 
+# when you have services one may depend on another so you can use depends_on property as used for api service below
+#when you have many services in a single container like below in order to debug you should check for individual services if running and doing there work.
+version: '3'
+services:
+    postgres:
+        image: 'postgres:10.5'
+    redis:
+        image: 'redis:4.0'
+    nginx:
+        #To have nginx always running even if our api,client,worker fails.
+        restart: always
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./nginx
+        ports:
+            - '3000:80'
+            # Map port 3050 on my machine to 80 inside my  container 
+    api:
+        depends_on:
+            - postgres
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./server
+        volumes: 
+            - /app/node_modules
+        #use this folder from container as-is
+            - ./server:/app
+        #use this folder from container as-is
+        #Map everything present in the server directory with /app in the container
+        #The advantage of above line is that any time we change the source code in this directory,
+        #we do not have to build the image again.
+        environment:
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - PGUSER=postgres
+            - PGHOST=postgres
+            - PGDATABASE=postgres
+            - PGPASSWORD=postgres_password
+            - PGPORT=5432
+    client:
+        stdin_open: true
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./client
+        volumes:
+            - /app/node_modules
+            - ./client:/app
+    worker:
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./worker
+        volumes: 
+            - /app/node_modules
+            - ./worker:/app
+        environment:
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
