@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t schawan/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true schawan/react-test npm test
+
+after_success:
+  - docker build -t schawan/multi-client ./client
+  - docker build -t schawan/muti-nginx ./nginx
+  - docker build -t schawan/muti-server ./server
+  - docker build -t schawan/muti-worker ./worker
+  #Log in to the docker  CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #Take images and push them to docker hub
+  - docker push schawan/multi-client
+  - docker push schawan/muti-nginx
+  - docker push schawan/muti-server
+  - docker push schawan/muti-worker
