@@ -1,0 +1,12 @@
+In the dockerrun.aws.json file 
+
+--> name can be anythig which will appear on the dashboard
+-->  "image": "schawan/multi-client --> picked up automatically by aws from docker hub
+-->  "hostname: name of the respective service in docker-compose.yml
+-->  "essential"  if true then if the container crashes rest all the containers would crash , hence set to false for our client.
+--> the hostname param is required if at all some other service is going to refer rhe service , in our case its perfectly fine to not have any  hostname for our 
+     worker and nginx container
+-->  "hostPort" :80 open up port 80 on our machine that runs all the containers
+     "containerPort":80 Map to port 80 on the container
+--> "links": ["client","server"]  the links tell nginx that the client and server containers exists , these links are uni directional , no need to have them 
+     in client and server.
